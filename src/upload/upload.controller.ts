@@ -3,36 +3,42 @@ import {
   Post,
   UseInterceptors,
   UploadedFile,
-  MaxFileSizeValidator,
-  ParseFilePipe,
-  ParseFilePipeBuilder,
+  Get,
+  Body,
+  Query,
 } from '@nestjs/common';
 import { UploadService } from './upload.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { FileSizeValidationPipe } from './pipes/file-size.validation.pipe';
-import { multerOptions } from './multer.options';
+import { ApiBody, ApiConsumes, ApiProperty, ApiQuery } from '@nestjs/swagger';
+import { CreateUploadDto, GetImageDto } from './dto/create-upload.dto';
 
 @Controller('upload')
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
-
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiConsumes('multipart/form-data')
   @Post('image')
   @UseInterceptors(FileInterceptor('file'))
   async upload(
-    @UploadedFile() // new FileSizeValidationPipe(),
-    //   validators: [new MaxFileSizeValidator({ maxSize: 30 })],
-    file // new ParseFilePipe({
-    // }),
-    // new ParseFilePipeBuilder()
-    //   // .addFileTypeValidator({
-    //   //   fileType: 'png',
-    //   // })
-    //   // .addMaxSizeValidator({
-    //   //   maxSize: 400,
-    //   // })
-    //   .build(),
-    : Express.Multer.File,
+    @UploadedFile()
+    file: Express.Multer.File,
+    @Body() createDto: CreateUploadDto,
   ) {
     return await this.uploadService.upload(file);
+  }
+  @ApiQuery({ name: 'url', type: 'string' })
+  @Get('image')
+  async getImage(@Query() query: any) {
+    return await this.uploadService.getImg(query.url);
   }
 }
